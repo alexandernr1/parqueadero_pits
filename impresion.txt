@@ -1,32 +1,12 @@
                                 
           PITS S.A.S            
             NIT: 901 121 607    
-              GT JMC 0,2 Via Guarne
-               Rionegro         
-        Responsable de Iva      
+              GT JMC 0,2 Via Gua
     Tel: 604 4086060            
-    Fecha Ingreso: 20-12-2024 02:43 PM
-    Fecha Salida: 20-12-2024 04:20 PM
-    Fecha: LogicaP.Tiempopro@1f23e9c2
-    Modalidad de tarifa: DIA MOTO
-    Duracion:Dias,0Horas,1Minutos,37
-    Subtotal: $3025             
-    Iva:574                     
-    valor a apagar: 3600        
-                                
-                                
-                                
-                                
-                                
-    Contribucion: $272          
-    El cobro de la contribucion corresponde al decreto 299 del municipio de rion
-    egro                        
-                                
-                                
-                                
-                                
-    -----------------------------------
-    Empleado: alexander  nieves 
-    fecha impresion:LogicaP.Tiempopro@1f23e9c2LogicaP.Tiempopro@582b40c6
-                                
+               Rionegro         
+    Lista de Vehiculos Activos  
+    Numero: $91                 
+    Calle:Calle 3               
+    Placa:asd987                
+    Tipo vehiculo:AUTO          
 VAVA

@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 
@@ -14,6 +15,12 @@ public class Lingresop {
     private final Connection cn = mysql.establecerConexionp();
     private String sSQL = "";
     public Integer totalregistros;
+    
+    ArrayList<Dingresop> listaplaca = new ArrayList<>();
+
+    public void agregarplaca(Dingresop placa) {
+        listaplaca.add(placa);
+    }
 
     public DefaultTableModel mostrar(String buscar) {
         DefaultTableModel modelo;
@@ -147,4 +154,62 @@ public class Lingresop {
             return false;
         }
     }
+
+    public String[] obtenerDatosIngreso(int numero) {
+        String[] datos = new String[3]; // Array de 3 elementos: placa, vehículo, servicio
+        String sSQL = "SELECT placa, tipovehiculo, tiposervicio FROM ingreso WHERE numero = ? AND estado = 'Activo'";
+
+        try ( PreparedStatement pst = cn.prepareStatement(sSQL)) {
+            pst.setInt(1, numero);
+            try ( ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    datos[0] = rs.getString("placa");
+                    datos[1] = rs.getString("tipovehiculo");
+                    datos[2] = rs.getString("tiposervicio");
+                } else {
+                    JOptionPane.showMessageDialog(null, "No se encontraron datos para el número: " + numero);
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al obtener los datos: " + e.getMessage());
+        }
+
+        return datos;
+    }
+
+    public DefaultTableModel mostrarIngreso(String buscar) {
+        DefaultTableModel modelo;
+
+        String[] titulos = {"Numero", "Calle", "placa", "Tipo Vehiculo"};
+
+        String[] registro = new String[4];
+
+        totalregistros = 0;
+        modelo = new DefaultTableModel(null, titulos);
+
+        sSQL = "select numero, calle, placa, tipovehiculo from ingreso where estado = 'Activo' order by calle";
+
+        try {
+            PreparedStatement pst = cn.prepareStatement(sSQL);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                registro[0] = rs.getString("numero");
+                registro[1] = rs.getString("calle");
+                registro[2] = rs.getString("placa");
+                registro[3] = rs.getString("tipovehiculo");
+             
+
+                totalregistros++;
+                modelo.addRow(registro);
+            }
+            return modelo;
+
+        } catch (SQLException e) {
+            JOptionPane.showConfirmDialog(null, e);
+            return null;
+        }
+    }
+
 }

@@ -127,7 +127,7 @@ public class Jinicioturnop extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jPanel2.setBackground(new java.awt.Color(255, 255, 204));
+        jPanel2.setBackground(new java.awt.Color(255, 255, 255));
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "INICIO TURNOS", javax.swing.border.TitledBorder.CENTER, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Segoe UI Black", 0, 14))); // NOI18N
 
         jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
@@ -380,8 +380,8 @@ public class Jinicioturnop extends javax.swing.JFrame {
                             (String) cboturnos.getItemAt(selecturno),
                             (String) cboempleados.getItemAt(trabajador),
                             (String) cboestado.getItemAt(estado),
-                            (String) txtnumero_turno.getText(),
-                            (String) txtidinicioturno.getText()
+                             txtnumero_turno.getText(),
+                             txtidinicioturno.getText()
                             
                     );
 
@@ -465,8 +465,8 @@ public class Jinicioturnop extends javax.swing.JFrame {
                         (String) cboturnos.getItemAt(selecturno),
                         (String) cboempleados.getItemAt(trabajador),
                         (String) cboestado.getItemAt(estado),
-                        (String) txtnumero_turno.getText(),
-                        (String) txtidinicioturno.getText()
+                         txtnumero_turno.getText(),
+                        txtidinicioturno.getText()
                 );
 
                 // Mostrar Jsalidaturno solo si la sesión ya estaba iniciada

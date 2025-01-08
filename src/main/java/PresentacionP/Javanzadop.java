@@ -24,11 +24,12 @@ public class Javanzadop extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         btnempleados = new javax.swing.JButton();
         btnhabitaciones = new javax.swing.JButton();
-        btnproducto = new javax.swing.JButton();
         lblacceso = new javax.swing.JLabel();
         btnCongelado = new javax.swing.JButton();
-        btnInformes = new javax.swing.JButton();
         btnReportes2 = new javax.swing.JButton();
+        btnInformes1 = new javax.swing.JButton();
+        btnbloqueos = new javax.swing.JButton();
+        btnproducto = new javax.swing.JButton();
         jdmenu = new javax.swing.JDesktopPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -47,7 +48,7 @@ public class Javanzadop extends javax.swing.JFrame {
                 btnempleadosActionPerformed(evt);
             }
         });
-        jPanel1.add(btnempleados, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 10, -1, 30));
+        jPanel1.add(btnempleados, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 160, 30));
 
         btnhabitaciones.setBackground(new java.awt.Color(255, 255, 204));
         btnhabitaciones.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
@@ -60,20 +61,7 @@ public class Javanzadop extends javax.swing.JFrame {
                 btnhabitacionesActionPerformed(evt);
             }
         });
-        jPanel1.add(btnhabitaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 10, 150, 30));
-
-        btnproducto.setBackground(new java.awt.Color(255, 255, 204));
-        btnproducto.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
-        btnproducto.setForeground(new java.awt.Color(0, 0, 102));
-        btnproducto.setText("REGISTRO CLIENTES");
-        btnproducto.setBorderPainted(false);
-        btnproducto.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnproducto.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnproductoActionPerformed(evt);
-            }
-        });
-        jPanel1.add(btnproducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 10, 152, 30));
+        jPanel1.add(btnhabitaciones, new org.netbeans.lib.awtextra.AbsoluteConstraints(170, 10, -1, 30));
         jPanel1.add(lblacceso, new org.netbeans.lib.awtextra.AbsoluteConstraints(1, 18, 74, -1));
 
         btnCongelado.setBackground(new java.awt.Color(255, 255, 204));
@@ -87,20 +75,7 @@ public class Javanzadop extends javax.swing.JFrame {
                 btnCongeladoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnCongelado, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 10, 150, 30));
-
-        btnInformes.setBackground(new java.awt.Color(255, 255, 204));
-        btnInformes.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
-        btnInformes.setForeground(new java.awt.Color(0, 0, 102));
-        btnInformes.setText("INFORMES");
-        btnInformes.setBorderPainted(false);
-        btnInformes.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        btnInformes.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnInformesActionPerformed(evt);
-            }
-        });
-        jPanel1.add(btnInformes, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 10, 130, 30));
+        jPanel1.add(btnCongelado, new org.netbeans.lib.awtextra.AbsoluteConstraints(290, 10, 140, 30));
 
         btnReportes2.setBackground(new java.awt.Color(255, 255, 204));
         btnReportes2.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
@@ -113,7 +88,46 @@ public class Javanzadop extends javax.swing.JFrame {
                 btnReportes2ActionPerformed(evt);
             }
         });
-        jPanel1.add(btnReportes2, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 10, 150, 30));
+        jPanel1.add(btnReportes2, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 10, 90, 30));
+
+        btnInformes1.setBackground(new java.awt.Color(255, 255, 204));
+        btnInformes1.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        btnInformes1.setForeground(new java.awt.Color(0, 0, 102));
+        btnInformes1.setText("INFORMES");
+        btnInformes1.setBorderPainted(false);
+        btnInformes1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnInformes1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnInformes1ActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnInformes1, new org.netbeans.lib.awtextra.AbsoluteConstraints(670, 10, 90, 30));
+
+        btnbloqueos.setBackground(new java.awt.Color(255, 255, 204));
+        btnbloqueos.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        btnbloqueos.setForeground(new java.awt.Color(0, 0, 102));
+        btnbloqueos.setText("BLOQUEOS");
+        btnbloqueos.setBorderPainted(false);
+        btnbloqueos.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnbloqueos.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnbloqueosActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnbloqueos, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 10, 100, 30));
+
+        btnproducto.setBackground(new java.awt.Color(255, 255, 204));
+        btnproducto.setFont(new java.awt.Font("Dialog", 1, 11)); // NOI18N
+        btnproducto.setForeground(new java.awt.Color(0, 0, 102));
+        btnproducto.setText("VALOR TIPO SERVICIO");
+        btnproducto.setBorderPainted(false);
+        btnproducto.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnproducto.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnproductoActionPerformed(evt);
+            }
+        });
+        jPanel1.add(btnproducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 10, 150, 30));
 
         javax.swing.GroupLayout jdmenuLayout = new javax.swing.GroupLayout(jdmenu);
         jdmenu.setLayout(jdmenuLayout);
@@ -123,7 +137,7 @@ public class Javanzadop extends javax.swing.JFrame {
         );
         jdmenuLayout.setVerticalGroup(
             jdmenuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 445, Short.MAX_VALUE)
+            .addGap(0, 418, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -140,7 +154,7 @@ public class Javanzadop extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jdmenu)
                 .addContainerGap())
@@ -172,28 +186,32 @@ public class Javanzadop extends javax.swing.JFrame {
         conelado.setVisible(true);
     }//GEN-LAST:event_btnCongeladoActionPerformed
 
-    private void btnInformesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInformesActionPerformed
-        // TODO add your handling code here:
-//        Jreportefecha reporte = new Jreportefecha();
-//        jdmenu.add(reporte);
-//        reporte.toFront();
-//        reporte.setVisible(true);
-    }//GEN-LAST:event_btnInformesActionPerformed
+    private void btnbloqueosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnbloqueosActionPerformed
+      
+        Jbloqueos bloqueo = new Jbloqueos();
+        jdmenu.add(bloqueo);
+        bloqueo.toFront();
+        bloqueo.setVisible(true);
+    }//GEN-LAST:event_btnbloqueosActionPerformed
 
     private void btnReportes2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReportes2ActionPerformed
         // TODO add your handling code here:
-//        Jreportes reportes = new Jreportes();
-//        jdmenu.add(reportes);
-//        reportes.toFront();
-//        reportes.setVisible(true);
+        Jreportes reportes = new Jreportes();
+        jdmenu.add(reportes);
+        reportes.toFront();
+        reportes.setVisible(true);
     }//GEN-LAST:event_btnReportes2ActionPerformed
 
     private void btnproductoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnproductoActionPerformed
-        JCliente_Empresas Jproducto = new JCliente_Empresas();
+        Jtipo Jproducto = new Jtipo();
         jdmenu.add(Jproducto);
         Jproducto.toFront();
         Jproducto.setVisible(true);
     }//GEN-LAST:event_btnproductoActionPerformed
+
+    private void btnInformes1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInformes1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_btnInformes1ActionPerformed
 
     public static void main(String args[]) {
 
@@ -207,8 +225,9 @@ public class Javanzadop extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCongelado;
-    private javax.swing.JButton btnInformes;
+    private javax.swing.JButton btnInformes1;
     private javax.swing.JButton btnReportes2;
+    private javax.swing.JButton btnbloqueos;
     private javax.swing.JButton btnempleados;
     private javax.swing.JButton btnhabitaciones;
     private javax.swing.JButton btnproducto;

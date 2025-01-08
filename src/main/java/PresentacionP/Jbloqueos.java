@@ -14,13 +14,13 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
-public class Jbloqueos extends javax.swing.JFrame {
+public class Jbloqueos extends javax.swing.JInternalFrame {
 
     public Jbloqueos() {
         initComponents();
         mostrar("");
         setTitle("ASIGNAR BLOQUEOS");
-        setLocationRelativeTo(null);
+//        setLocationRelativeTo(null);
         configurarTabla();
         ocultar();
 

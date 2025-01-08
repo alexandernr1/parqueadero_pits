@@ -1,11 +1,15 @@
 package LogicaP;
 
+import DatosP.Dingresop;
 import DatosP.Dinicioturnop;
 import DatosP.Dsalidap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 
 public class Fsalidap {
@@ -14,6 +18,8 @@ public class Fsalidap {
     private final Connection cn = mysql.establecerConexionp();
     private String sSQL = "";
     public Integer totalregistros;
+    Statement st;
+    ResultSet rs;
 
     public boolean insertar(Dsalidap dts) {
         sSQL = "insert into salida (idingreso,placa,tipovehiculo,"
@@ -55,7 +61,6 @@ public class Fsalidap {
             pst.setInt(28, dts.getDescuento());
             pst.setString(29, dts.getTotalautos());
             pst.setString(30, dts.getTotalmotos());
-            
 
             int n = pst.executeUpdate();
 
@@ -143,34 +148,33 @@ public class Fsalidap {
     }
 
     public int[] contarEstadoActivo() {
-    int[] conteos = new int[2]; // Índice 0 para Autos, índice 1 para Motos
-    String sqlAuto = "SELECT COUNT(tipovehiculo) AS estado FROM ingreso WHERE estado = 'Activo' AND tipovehiculo = 'AUTO'";
-    String sqlMoto = "SELECT COUNT(tipovehiculo) AS estado FROM ingreso WHERE estado = 'Activo' AND tipovehiculo = 'MOTO'";
+        int[] conteos = new int[2]; // Índice 0 para Autos, índice 1 para Motos
+        String sqlAuto = "SELECT COUNT(tipovehiculo) AS estado FROM ingreso WHERE estado = 'Activo' AND tipovehiculo = 'AUTO'";
+        String sqlMoto = "SELECT COUNT(tipovehiculo) AS estado FROM ingreso WHERE estado = 'Activo' AND tipovehiculo = 'MOTO'";
 
-    try {
-        // Consulta para Autos
-        PreparedStatement pstAuto = cn.prepareStatement(sqlAuto);
-        ResultSet rsAuto = pstAuto.executeQuery();
-        if (rsAuto.next()) {
-            conteos[0] = rsAuto.getInt("estado");
+        try {
+            // Consulta para Autos
+            PreparedStatement pstAuto = cn.prepareStatement(sqlAuto);
+            ResultSet rsAuto = pstAuto.executeQuery();
+            if (rsAuto.next()) {
+                conteos[0] = rsAuto.getInt("estado");
+            }
+
+            // Consulta para Motos
+            PreparedStatement pstMoto = cn.prepareStatement(sqlMoto);
+            ResultSet rsMoto = pstMoto.executeQuery();
+            if (rsMoto.next()) {
+                conteos[1] = rsMoto.getInt("estado");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al ejecutar la consulta: " + e.getMessage());
         }
 
-        // Consulta para Motos
-        PreparedStatement pstMoto = cn.prepareStatement(sqlMoto);
-        ResultSet rsMoto = pstMoto.executeQuery();
-        if (rsMoto.next()) {
-            conteos[1] = rsMoto.getInt("estado");
-        }
-
-    } catch (SQLException e) {
-        System.err.println("Error al ejecutar la consulta: " + e.getMessage());
+        return conteos; // Retornar los resultados
     }
 
-    return conteos; // Retornar los resultados
-}
-
     //consulta para traer el tipo de servicio de ingreso y hacer el calculo
-
     public int tiposervicio(String Placa, String tiposervicio) {
         int precio = 0;
         sSQL = "SELECT t.precio "
@@ -218,5 +222,39 @@ public class Fsalidap {
         }
 
         return precio; // Retorna false si no se encuentra un registro
+    }
+
+    public void llenarcboturno(JComboBox<String> combo) {
+
+        DefaultComboBoxModel<String> com = new DefaultComboBoxModel<>();  // Modelo para el JComboBox
+        combo.setModel(com);  // Asignamos el modelo al combo
+        Cconexionp conexion = new Cconexionp();  // Conexión a la base de datos
+
+        com.addElement("PLACA");  // Primer elemento del ComboBox
+
+        try {
+            // Establecer la conexión y ejecutar la consulta SQL
+            Connection conectar = conexion.establecerConexionp();
+            st = conectar.createStatement();
+            rs = st.executeQuery("select placa from ingreso where estado = 'Activo' order by calle");
+
+            // Recorrer los resultados de la consulta
+            while (rs.next()) {
+                // Obtener placa desde el ResultSet
+                String placa = rs.getString("placa");
+
+                // Agregar la placa modelo del ComboBox
+                com.addElement(placa);
+
+                
+                Lingresop func = new Lingresop();
+                Dingresop placas = new Dingresop();
+                placas.setPlaca(placa);
+                func.agregarplaca(placas);  
+            }
+        } catch (SQLException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        }
+
     }
 }

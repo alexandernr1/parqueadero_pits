@@ -3,6 +3,7 @@ package PresentacionP;
 import LogicaP.Tiempopro;
 import DatosP.Dingresop;
 import DatosP.Dzona;
+import Impresion.ImprimirIngresop;
 import LogicaP.Cconexionp;
 import LogicaP.Fbloqueos;
 import LogicaP.Fzonap;
@@ -12,10 +13,13 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.HeadlessException;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -125,6 +129,7 @@ public class Jingresop extends javax.swing.JFrame {
     }
 
     private void inhabilitar() {
+        mostrarTiempo();
         lblturnos.setVisible(false);
         txtidingreso.setVisible(false);
         txtidinicio_turno.setVisible(false);
@@ -646,7 +651,7 @@ public class Jingresop extends javax.swing.JFrame {
         Lingresop func = new Lingresop();
 
         dts.setCalle(txtcalle.getText().trim());
-        dts.setIdinicioturno(Integer.parseInt(txtidinicio_turno.getText()));
+//        dts.setIdinicioturno(Integer.parseInt(txtidinicio_turno.getText()));
         dts.setTurno(lblturnos.getText());
         dts.setNumeroturno(txtnumeroturno.getText().trim());
         dts.setEmpleado(txtempleado.getText().trim());
@@ -672,6 +677,15 @@ public class Jingresop extends javax.swing.JFrame {
                 dts3.setNumero(txtnumero.getText());
                 func3.ocupar(dts3);
                 inhabilitar();
+                
+                ImprimirIngresop ingreso =  new ImprimirIngresop();
+                try {
+                    ingreso.ImprimirFactuIngreso();
+                } catch (IOException ex) {
+                    Logger.getLogger(Jingresop.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(Jingresop.class.getName()).log(Level.SEVERE, null, ex);
+                }
                   
             }
 

@@ -52,7 +52,7 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
         jSeparator2.setForeground(new java.awt.Color(0, 0, 0));
         jSeparator2.setMinimumSize(new java.awt.Dimension(50, 10));
         jSeparator2.setPreferredSize(new java.awt.Dimension(50, 10));
-        jPanel2.add(jSeparator2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 220, 197, 20));
+        jPanel2.add(jSeparator2, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 160, 197, 20));
 
         txtusuario.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         txtusuario.setForeground(new java.awt.Color(204, 204, 204));
@@ -67,15 +67,15 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
                 txtusuarioActionPerformed(evt);
             }
         });
-        jPanel2.add(txtusuario, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 190, 197, 30));
+        jPanel2.add(txtusuario, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 130, 197, 30));
 
         usuarioLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         usuarioLabel.setText("Usuario:");
-        jPanel2.add(usuarioLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 160, -1, -1));
+        jPanel2.add(usuarioLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 100, -1, -1));
 
         passwordLabel.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         passwordLabel.setText("Password:");
-        jPanel2.add(passwordLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 240, -1, -1));
+        jPanel2.add(passwordLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 180, -1, -1));
 
         txtpassword.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         txtpassword.setBorder(null);
@@ -89,14 +89,14 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
                 txtpasswordKeyPressed(evt);
             }
         });
-        jPanel2.add(txtpassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 270, 160, 30));
+        jPanel2.add(txtpassword, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 210, 160, 30));
 
         jSeparator1.setForeground(new java.awt.Color(0, 0, 0));
-        jPanel2.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 300, 160, 20));
+        jPanel2.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 240, 160, 20));
 
-        btnIngresar.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        btnIngresar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/contrasena.png"))); // NOI18N
+        btnIngresar.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
         btnIngresar.setText("Ingresar");
+        btnIngresar.setBorder(null);
         btnIngresar.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnIngresar.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnIngresar.addActionListener(new java.awt.event.ActionListener() {
@@ -104,14 +104,13 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
                 btnIngresarActionPerformed(evt);
             }
         });
-        jPanel2.add(btnIngresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 340, -1, 50));
+        jPanel2.add(btnIngresar, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 280, -1, 40));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI Historic", 1, 24)); // NOI18N
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/perfil-del-usuario.png"))); // NOI18N
         jLabel3.setText("INICIAR SESIÓN");
         jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
         jLabel3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jPanel2.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 70, -1, -1));
+        jPanel2.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(80, 40, -1, -1));
 
         header.setBackground(new java.awt.Color(255, 255, 255));
         header.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
@@ -148,31 +147,27 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
         exitBtn.setLayout(exitBtnLayout);
         exitBtnLayout.setHorizontalGroup(
             exitBtnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(exitBtnLayout.createSequentialGroup()
-                .addComponent(exitTxt, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(exitTxt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 21, Short.MAX_VALUE)
         );
         exitBtnLayout.setVerticalGroup(
             exitBtnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(exitBtnLayout.createSequentialGroup()
-                .addComponent(exitTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 4, Short.MAX_VALUE))
+            .addComponent(exitTxt, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout headerLayout = new javax.swing.GroupLayout(header);
         header.setLayout(headerLayout);
         headerLayout.setHorizontalGroup(
             headerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(headerLayout.createSequentialGroup()
-                .addComponent(exitBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 290, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, headerLayout.createSequentialGroup()
+                .addGap(0, 309, Short.MAX_VALUE)
+                .addComponent(exitBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         headerLayout.setVerticalGroup(
             headerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(exitBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        jPanel2.add(header, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 330, 30));
+        jPanel2.add(header, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 330, 20));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -184,9 +179,7 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 347, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -225,8 +218,8 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
         Dempleadop empleado = func.login(login, password);
 
         if (empleado != null) {
-            System.out.println("Login exitoso. Datos del empleado:");
-            System.out.println(empleado);
+//            System.out.println("Login exitoso. Datos del empleado:");
+//            System.out.println(empleado);
             
             // Crear y mostrar el formulario principal
             Javanzadop form = new Javanzadop();
@@ -270,8 +263,8 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
         Dempleadop empleado = func.login(login, password);
 
         if (empleado != null) {
-            System.out.println("Login exitoso. Datos del empleado:");
-            System.out.println(empleado);
+//            System.out.println("Login exitoso. Datos del empleado:");
+//            System.out.println(empleado);
             
             // Crear y mostrar el formulario principal
             Javanzadop form = new Javanzadop();
@@ -301,7 +294,7 @@ public final class LoguinDeAdminp extends javax.swing.JFrame {
     }//GEN-LAST:event_btnIngresarActionPerformed
 
     private void exitTxtMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_exitTxtMouseClicked
-        System.exit(0);
+        dispose();
     }//GEN-LAST:event_exitTxtMouseClicked
 
     private void exitTxtMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_exitTxtMouseEntered

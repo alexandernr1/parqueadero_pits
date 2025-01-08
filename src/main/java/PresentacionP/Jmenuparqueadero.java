@@ -3,33 +3,73 @@ package PresentacionP;
 import LogicaP.ActualizadorColoresp;
 import LogicaP.Finicioturnop;
 import LogicaP.Fzonap;
+import LogicaP.Lingresop;
 import java.awt.Color;
 import java.awt.Component;
+import java.beans.PropertyVetoException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
+import javax.swing.plaf.basic.BasicInternalFrameUI;
 
 public class Jmenuparqueadero extends javax.swing.JInternalFrame {
 
     public static Boolean sesionIniciada = false;
 
-    
     private Jingresop ingresoFormulario;
     private Jsalidap salidaFormulario;
-    private Jabonosp pagoFormulario;
+    private Jotrosservicios pagoFormulario;
     private Jfinturnop salidaturno;
+    private static boolean turnoRecuperado = false;
     public Fzonap fcn;
 
     public Jmenuparqueadero() {
         initComponents();
+        setBorder(null);
+        setIconifiable(true);
+        ((BasicInternalFrameUI) this.getUI()).setNorthPane(null);
         this.fcn = new Fzonap();
         ActualizadorColoresp actualizador = new ActualizadorColoresp(this);
         Thread thread = new Thread(actualizador);
         actualizador.iniciarHilo();
         thread.start();
         lblidinicioturno.setVisible(false);
+        iniciarMonitoreoSesion();
+        btndeshabilitados();
+        DatoIngreso();
 
+    }
+
+    private void btndeshabilitados() {
+        boolean estado = sesionIniciada; // Determinar el estado de habilitación
+        btnregistrovehiculo.setEnabled(estado);
+        btnsalidap.setEnabled(estado);
+        btnabonos.setEnabled(estado);
+    }
+
+    private void iniciarMonitoreoSesion() {
+        Thread monitorSesion = new Thread(() -> {
+            boolean estadoPrevio = sesionIniciada;
+            while (true) {
+                if (estadoPrevio != sesionIniciada) {
+                    estadoPrevio = sesionIniciada;
+                    SwingUtilities.invokeLater(() -> btndeshabilitados());
+                }
+                try {
+                    Thread.sleep(500); // Revisar cada 500 ms
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        monitorSesion.setDaemon(true); // Para que se detenga al cerrar la aplicación
+        monitorSesion.start();
     }
 
     static void actualizarDatosUsuario1(String fecha, String turno, String empleado, String estado, String numero_turno, String idinicioturno) {
@@ -70,7 +110,7 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
     public static void actualizarnnumero_turno(String numero_turno) {
         lblnumeroturno.setText(numero_turno);
     }
-    
+
     public static void actualizaridinicioturno(String idinicioturno) {
         lblidinicioturno.setText(idinicioturno);
     }
@@ -116,12 +156,58 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
             }
         }
     }
+    public Icon icono(String path, int width, int heigth) {
+        Icon img = new ImageIcon(new ImageIcon(getClass().getResource(path)).getImage().getScaledInstance(width, heigth, java.awt.Image.SCALE_SMOOTH));
+        return img;
+    }
 
-    @SuppressWarnings("unchecked")
+    private void DatoIngreso() {
+
+       Lingresop placa = new Lingresop();
+    Pattern pattern = Pattern.compile("\\d+"); // Patrón para solo números
+
+    // Iterar sobre los componentes en pnlBotones
+    Component[] componentes = pnlBotones.getComponents();
+    for (Component componente : componentes) {
+        if (componente instanceof JToggleButton boton) {
+            String nombreBoton = boton.getText();
+
+            // Verificar si el texto del botón es solo números
+            if (pattern.matcher(nombreBoton).matches()) {
+                boton.addActionListener(e -> {
+                    try {
+                        int numero = Integer.parseInt(nombreBoton); // Convertir texto a número
+                        String[] dato = placa.obtenerDatosIngreso(numero);
+                        String tipoVehiculo = dato[1];
+
+                        if (dato[0] != null) { // Si hay datos de placa
+                            if (tipoVehiculo != null) { // Verificar si el tipoVehiculo no es null
+                                switch (tipoVehiculo) {
+                                    case "AUTO" -> JOptionPane.showMessageDialog(null, "Placa:" + dato[0] + "\n" + "Vehículo:" + dato[1] + "\n" + "Servicio:" + dato[2] + "\n", "DATOS VEHÍCULO", JOptionPane.PLAIN_MESSAGE, icono("/Imagenes/Transporte.png", 64, 64));
+                                    case "MOTO" -> JOptionPane.showMessageDialog(null, "Placa:" + dato[0] + "\n" + "Vehículo:" + dato[1] + "\n" + "Servicio:" + dato[2] + "\n", "DATOS VEHÍCULO", JOptionPane.PLAIN_MESSAGE, icono("/Imagenes/Moto.png", 64, 64));
+                                    default -> JOptionPane.showMessageDialog(null, "Tipo de vehículo desconocido: " + tipoVehiculo, "ADVERTENCIA", JOptionPane.WARNING_MESSAGE);
+                                }
+                            } else {
+//                                JOptionPane.showMessageDialog(null, "El tipo de vehículo es desconocido.", "ADVERTENCIA", JOptionPane.WARNING_MESSAGE);
+                            }
+                        } else {
+//                            JOptionPane.showMessageDialog(null, "No se encontraron datos para esta placa.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (NumberFormatException ex) {
+                        // Manejo del error si el texto del botón no es un número válido
+//                        JOptionPane.showMessageDialog(null, "El texto del botón no es un número válido.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
+            }
+        }
+    }
+        }
+    
+
+        @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        desktopPane = new javax.swing.JDesktopPane();
         jPanel2 = new javax.swing.JPanel();
         lblfecha = new javax.swing.JLabel();
         lblempleado = new javax.swing.JLabel();
@@ -335,30 +421,24 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jSeparator2 = new javax.swing.JSeparator();
-        jSeparator1 = new javax.swing.JSeparator();
-        jSeparator3 = new javax.swing.JSeparator();
-        jSeparator4 = new javax.swing.JSeparator();
-        jSeparator5 = new javax.swing.JSeparator();
-        jSeparator6 = new javax.swing.JSeparator();
         lblidinicioturno = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
         btnregistrovehiculo = new javax.swing.JButton();
         btnsalidap = new javax.swing.JButton();
         btnentregaturnop = new javax.swing.JButton();
-        btnpagosp = new javax.swing.JButton();
-        btnregistro4 = new javax.swing.JButton();
+        btnabonos = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
+        btncerrar = new javax.swing.JButton();
+        jLabel12 = new javax.swing.JLabel();
+        btnlista = new javax.swing.JButton();
 
-        setClosable(true);
+        setBorder(null);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setIconifiable(true);
-        setMaximizable(true);
+        setForeground(java.awt.Color.white);
+        setFocusable(false);
 
-        desktopPane.setBackground(new java.awt.Color(204, 204, 204));
-
-        jPanel2.setBackground(new java.awt.Color(255, 255, 153));
+        jPanel2.setBackground(new java.awt.Color(204, 204, 204));
 
         lblfecha.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         lblfecha.setText("fecha");
@@ -394,10 +474,20 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         jToggleButton153.setText("42");
 
         jToggleButton154.setText("1");
+        jToggleButton154.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton154ActionPerformed(evt);
+            }
+        });
 
         jToggleButton155.setText("41");
 
         jToggleButton156.setText("2");
+        jToggleButton156.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton156ActionPerformed(evt);
+            }
+        });
 
         jToggleButton157.setText("40");
 
@@ -406,6 +496,11 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         jToggleButton159.setText("39");
 
         jToggleButton160.setText("4");
+        jToggleButton160.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jToggleButton160ActionPerformed(evt);
+            }
+        });
 
         jToggleButton161.setText("38");
 
@@ -842,137 +937,6 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         pnlBotonesLayout.setHorizontalGroup(
             pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlBotonesLayout.createSequentialGroup()
-                .addGap(26, 26, 26)
-                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlBotonesLayout.createSequentialGroup()
-                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(240, 240, 240)
-                                .addComponent(jToggleButton165))
-                            .addComponent(jToggleButton153)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(160, 160, 160)
-                                .addComponent(jToggleButton161))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(120, 120, 120)
-                                .addComponent(jToggleButton159))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(80, 80, 80)
-                                .addComponent(jToggleButton157))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(200, 200, 200)
-                                .addComponent(jToggleButton163))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2)
-                                    .addComponent(jToggleButton155))))
-                        .addGap(38, 38, 38)
-                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(400, 400, 400)
-                                .addComponent(jToggleButton189))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(280, 280, 280)
-                                .addComponent(jToggleButton183))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(80, 80, 80)
-                                .addComponent(jToggleButton173))
-                            .addComponent(jToggleButton169)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(jToggleButton171))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(200, 200, 200)
-                                .addComponent(jToggleButton179))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(160, 160, 160)
-                                .addComponent(jToggleButton177))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(360, 360, 360)
-                                .addComponent(jToggleButton187))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(240, 240, 240)
-                                .addComponent(jToggleButton181))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(320, 320, 320)
-                                .addComponent(jToggleButton185))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(480, 480, 480)
-                                .addComponent(jToggleButton193))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(120, 120, 120)
-                                .addComponent(jToggleButton175))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(440, 440, 440)
-                                .addComponent(jToggleButton191))))
-                    .addGroup(pnlBotonesLayout.createSequentialGroup()
-                        .addGap(280, 280, 280)
-                        .addComponent(jToggleButton167))
-                    .addGroup(pnlBotonesLayout.createSequentialGroup()
-                        .addComponent(jToggleButton154, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(680, 680, 680)
-                                .addComponent(jToggleButton190))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(440, 440, 440)
-                                .addComponent(jToggleButton178))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(760, 760, 760)
-                                .addComponent(jToggleButton194))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(560, 560, 560)
-                                .addComponent(jToggleButton184))
-                            .addComponent(jToggleButton156, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(720, 720, 720)
-                                .addComponent(jToggleButton192))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(80, 80, 80)
-                                .addComponent(jToggleButton160, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(120, 120, 120)
-                                .addComponent(jToggleButton162, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(480, 480, 480)
-                                .addComponent(jToggleButton180))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(360, 360, 360)
-                                .addComponent(jToggleButton174))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(400, 400, 400)
-                                .addComponent(jToggleButton176))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(40, 40, 40)
-                                .addComponent(jToggleButton158, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(320, 320, 320)
-                                .addComponent(jToggleButton172))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(520, 520, 520)
-                                .addComponent(jToggleButton182))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(600, 600, 600)
-                                .addComponent(jToggleButton186))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(240, 240, 240)
-                                .addComponent(jToggleButton168, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(640, 640, 640)
-                                .addComponent(jToggleButton188))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(160, 160, 160)
-                                .addComponent(jToggleButton164, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(280, 280, 280)
-                                .addComponent(jToggleButton170, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(200, 200, 200)
-                                .addComponent(jToggleButton166, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(pnlBotonesLayout.createSequentialGroup()
                 .addGap(30, 30, 30)
                 .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlBotonesLayout.createSequentialGroup()
@@ -1147,8 +1111,8 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
                                 .addGap(80, 80, 80)
                                 .addComponent(jToggleButton283))
                             .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(30, 30, 30)
-                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addGap(40, 40, 40)
+                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel3)
                                     .addComponent(jToggleButton282))))
                         .addComponent(jToggleButton314, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1271,14 +1235,9 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
                         .addGap(2, 2, 2)
                         .addComponent(jToggleButton354))
                     .addGroup(pnlBotonesLayout.createSequentialGroup()
-                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addComponent(jToggleButton355)
-                                .addGap(2, 2, 2)
-                                .addComponent(jToggleButton356))
-                            .addGroup(pnlBotonesLayout.createSequentialGroup()
-                                .addGap(37, 37, 37)
-                                .addComponent(jLabel4)))
+                        .addComponent(jToggleButton355)
+                        .addGap(2, 2, 2)
+                        .addComponent(jToggleButton356)
                         .addGap(2, 2, 2)
                         .addComponent(jToggleButton357)
                         .addGap(2, 2, 2)
@@ -1348,6 +1307,142 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
                         .addGap(2, 2, 2)
                         .addComponent(jToggleButton389)))
                 .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(pnlBotonesLayout.createSequentialGroup()
+                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(240, 240, 240)
+                                        .addComponent(jToggleButton165))
+                                    .addComponent(jToggleButton153)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(160, 160, 160)
+                                        .addComponent(jToggleButton161))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(120, 120, 120)
+                                        .addComponent(jToggleButton159))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(80, 80, 80)
+                                        .addComponent(jToggleButton157))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(200, 200, 200)
+                                        .addComponent(jToggleButton163))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(40, 40, 40)
+                                        .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel2)
+                                            .addComponent(jToggleButton155))))
+                                .addGap(38, 38, 38)
+                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(400, 400, 400)
+                                        .addComponent(jToggleButton189))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(280, 280, 280)
+                                        .addComponent(jToggleButton183))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(80, 80, 80)
+                                        .addComponent(jToggleButton173))
+                                    .addComponent(jToggleButton169)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(40, 40, 40)
+                                        .addComponent(jToggleButton171))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(200, 200, 200)
+                                        .addComponent(jToggleButton179))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(160, 160, 160)
+                                        .addComponent(jToggleButton177))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(360, 360, 360)
+                                        .addComponent(jToggleButton187))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(240, 240, 240)
+                                        .addComponent(jToggleButton181))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(320, 320, 320)
+                                        .addComponent(jToggleButton185))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(480, 480, 480)
+                                        .addComponent(jToggleButton193))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(120, 120, 120)
+                                        .addComponent(jToggleButton175))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(440, 440, 440)
+                                        .addComponent(jToggleButton191))))
+                            .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                .addGap(280, 280, 280)
+                                .addComponent(jToggleButton167))
+                            .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                .addComponent(jToggleButton154, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGroup(pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(680, 680, 680)
+                                        .addComponent(jToggleButton190))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(440, 440, 440)
+                                        .addComponent(jToggleButton178))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(760, 760, 760)
+                                        .addComponent(jToggleButton194))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(560, 560, 560)
+                                        .addComponent(jToggleButton184))
+                                    .addComponent(jToggleButton156, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(720, 720, 720)
+                                        .addComponent(jToggleButton192))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(80, 80, 80)
+                                        .addComponent(jToggleButton160, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(120, 120, 120)
+                                        .addComponent(jToggleButton162, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(480, 480, 480)
+                                        .addComponent(jToggleButton180))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(360, 360, 360)
+                                        .addComponent(jToggleButton174))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(400, 400, 400)
+                                        .addComponent(jToggleButton176))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(40, 40, 40)
+                                        .addComponent(jToggleButton158, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(320, 320, 320)
+                                        .addComponent(jToggleButton172))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(520, 520, 520)
+                                        .addComponent(jToggleButton182))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(600, 600, 600)
+                                        .addComponent(jToggleButton186))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(240, 240, 240)
+                                        .addComponent(jToggleButton168, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(640, 640, 640)
+                                        .addComponent(jToggleButton188))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(160, 160, 160)
+                                        .addComponent(jToggleButton164, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(280, 280, 280)
+                                        .addComponent(jToggleButton170, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                                        .addGap(200, 200, 200)
+                                        .addComponent(jToggleButton166, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                    .addGroup(pnlBotonesLayout.createSequentialGroup()
+                        .addGap(67, 67, 67)
+                        .addComponent(jLabel4)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnlBotonesLayout.setVerticalGroup(
             pnlBotonesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1574,267 +1669,324 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
 
         jScrollPane1.setViewportView(pnlBotones);
 
-        jSeparator2.setForeground(new java.awt.Color(0, 0, 0));
-
-        jSeparator1.setForeground(new java.awt.Color(0, 0, 0));
-
-        jSeparator3.setForeground(new java.awt.Color(0, 0, 0));
-
-        jSeparator4.setForeground(new java.awt.Color(0, 0, 0));
-
-        jSeparator5.setForeground(new java.awt.Color(0, 0, 0));
-
-        jSeparator6.setForeground(new java.awt.Color(0, 0, 0));
-
         lblidinicioturno.setText("ID");
 
         jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/Imagen pits.jpg"))); // NOI18N
         jLabel5.setText("jLabel5");
-
-        jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/Logo luci.png"))); // NOI18N
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE))))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel12)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 184, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(74, 74, 74)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblempleado, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel11)
-                        .addGap(7, 7, 7)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(lblnumeroturno)
-                                .addGap(75, 75, 75)
-                                .addComponent(lblidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(2, 2, 2)
-                                .addComponent(jLabel10)))
-                        .addGap(6, 6, 6)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblturnos, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(4, 4, 4)
-                                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(lblfecha, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(73, 73, 73)
-                        .addComponent(jLabel9)
-                        .addGap(11, 11, 11)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSeparator6, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblestado, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(73, 73, 73)
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(8, 8, 8)
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(2, 2, 2)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addGap(2, 2, 2)
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addComponent(lblempleado)
-                                                .addGap(0, 0, 0)
-                                                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addComponent(jLabel11)
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addComponent(lblnumeroturno)
-                                                .addGap(4, 4, 4)
-                                                .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addGap(5, 5, 5)
-                                        .addComponent(jLabel6)
-                                        .addGap(8, 8, 8)
-                                        .addComponent(jLabel10))
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addGap(3, 3, 3)
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addGap(26, 26, 26)
-                                                .addComponent(lblturnos))
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                                .addGap(17, 17, 17)
-                                                .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addComponent(lblfecha)))
-                                    .addComponent(jLabel9)
-                                    .addComponent(lblestado)))
-                            .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(lblidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(32, 32, 32)
-                        .addComponent(jSeparator6, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(126, 126, 126)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(6, 6, 6))
-        );
-
-        jPanel1.setBackground(new java.awt.Color(255, 255, 153));
-        jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
         btnregistrovehiculo.setBackground(new java.awt.Color(204, 204, 204));
         btnregistrovehiculo.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
         btnregistrovehiculo.setForeground(new java.awt.Color(0, 0, 102));
         btnregistrovehiculo.setText("INGRESO VEHICULO");
         btnregistrovehiculo.setActionCommand("     REGISTRO");
-        btnregistrovehiculo.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnregistrovehiculo.setBorder(null);
         btnregistrovehiculo.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnregistrovehiculo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnregistrovehiculoActionPerformed(evt);
             }
         });
-        jPanel1.add(btnregistrovehiculo, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 130, 30));
 
         btnsalidap.setBackground(new java.awt.Color(204, 204, 204));
         btnsalidap.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
         btnsalidap.setForeground(new java.awt.Color(0, 0, 102));
         btnsalidap.setText("SALIDA VEHICULO");
         btnsalidap.setActionCommand("     REGISTRO");
-        btnsalidap.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnsalidap.setBorder(null);
         btnsalidap.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnsalidap.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnsalidapActionPerformed(evt);
             }
         });
-        jPanel1.add(btnsalidap, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 10, 130, 30));
 
         btnentregaturnop.setBackground(new java.awt.Color(204, 204, 204));
         btnentregaturnop.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
         btnentregaturnop.setForeground(new java.awt.Color(0, 0, 102));
         btnentregaturnop.setText("ENTREGA TURNO");
         btnentregaturnop.setActionCommand("     REGISTRO");
-        btnentregaturnop.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnentregaturnop.setBorder(null);
         btnentregaturnop.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         btnentregaturnop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnentregaturnopActionPerformed(evt);
             }
         });
-        jPanel1.add(btnentregaturnop, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 10, 130, 30));
 
-        btnpagosp.setBackground(new java.awt.Color(204, 204, 204));
-        btnpagosp.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
-        btnpagosp.setForeground(new java.awt.Color(0, 0, 102));
-        btnpagosp.setText("ABONOS");
-        btnpagosp.setActionCommand("     REGISTRO");
-        btnpagosp.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnpagosp.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnpagosp.addActionListener(new java.awt.event.ActionListener() {
+        btnabonos.setBackground(new java.awt.Color(204, 204, 204));
+        btnabonos.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
+        btnabonos.setForeground(new java.awt.Color(0, 0, 102));
+        btnabonos.setText("OTROS SERVICIOS ");
+        btnabonos.setActionCommand("     REGISTRO");
+        btnabonos.setBorder(null);
+        btnabonos.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnabonos.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnpagospActionPerformed(evt);
+                btnabonosActionPerformed(evt);
             }
         });
-        jPanel1.add(btnpagosp, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 10, 130, 30));
 
-        btnregistro4.setBackground(new java.awt.Color(204, 204, 204));
-        btnregistro4.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
-        btnregistro4.setForeground(new java.awt.Color(0, 0, 102));
-        btnregistro4.setText("OTROS");
-        btnregistro4.setActionCommand("     REGISTRO");
-        btnregistro4.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        btnregistro4.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        btnregistro4.addActionListener(new java.awt.event.ActionListener() {
+        jButton3.setBackground(new java.awt.Color(204, 204, 204));
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/window.png"))); // NOI18N
+        jButton3.setBorder(null);
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnregistro4ActionPerformed(evt);
+                jButton3ActionPerformed(evt);
             }
         });
-        jPanel1.add(btnregistro4, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 10, 130, 30));
 
-        desktopPane.setLayer(jPanel2, javax.swing.JLayeredPane.DEFAULT_LAYER);
-        desktopPane.setLayer(jPanel1, javax.swing.JLayeredPane.DEFAULT_LAYER);
+        jButton1.setBackground(new java.awt.Color(204, 204, 204));
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/full-screen.png"))); // NOI18N
+        jButton1.setBorder(null);
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
-        javax.swing.GroupLayout desktopPaneLayout = new javax.swing.GroupLayout(desktopPane);
-        desktopPane.setLayout(desktopPaneLayout);
-        desktopPaneLayout.setHorizontalGroup(
-            desktopPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(desktopPaneLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(6, 6, 6))
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 1062, Short.MAX_VALUE)
+        btncerrar.setBackground(new java.awt.Color(204, 204, 204));
+        btncerrar.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        btncerrar.setText("X");
+        btncerrar.setBorder(null);
+        btncerrar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btncerrarMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btncerrarMouseExited(evt);
+            }
+        });
+        btncerrar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btncerrarActionPerformed(evt);
+            }
+        });
+
+        jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/Logo luci.png"))); // NOI18N
+
+        btnlista.setText("LISTA");
+        btnlista.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnlistaActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(btnregistrovehiculo, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(btnsalidap, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(btnentregaturnop, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(btnabonos, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnlista)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(btncerrar, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(11, 11, 11)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(6, 6, 6))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                        .addComponent(jLabel10)
+                                        .addGap(14, 14, 14))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblfecha, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                                        .addComponent(lblturnos, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(jLabel9))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                                        .addComponent(lblempleado, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(55, 55, 55)
+                                        .addComponent(jLabel11)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(lblnumeroturno)
+                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                        .addComponent(lblestado, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(29, 29, 29)
+                                        .addComponent(lblidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 341, Short.MAX_VALUE)
+                        .addComponent(jLabel12)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
-        desktopPaneLayout.setVerticalGroup(
-            desktopPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, desktopPaneLayout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnregistrovehiculo, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnsalidap, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnentregaturnop, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnabonos, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton3)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(btncerrar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnlista))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(30, 30, 30)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel10)
+                                    .addComponent(lblturnos)
+                                    .addComponent(jLabel9)
+                                    .addComponent(lblestado)
+                                    .addComponent(lblidinicioturno))
+                                .addGap(1, 1, 1)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblempleado)
+                                        .addComponent(jLabel11)
+                                        .addComponent(lblnumeroturno))))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(lblfecha)
+                                    .addComponent(jLabel6)))
+                            .addComponent(jLabel5))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 412, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(desktopPane)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(desktopPane)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnregistrovehiculoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnregistrovehiculoActionPerformed
+    private void btncerrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btncerrarActionPerformed
+        // TODO add your handling code here:
+        dispose();
+    }//GEN-LAST:event_btncerrarActionPerformed
 
-        if (ingresoFormulario == null || !ingresoFormulario.isVisible()) {
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        try {
+            // TODO add your handling code here:
+            setMaximum(true);
+        } catch (PropertyVetoException ex) {
+            Logger.getLogger(Jmenuparqueadero.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        try {
+            // TODO add your handling code here:
+
+            setIcon((true));
+        } catch (PropertyVetoException ex) {
+            Logger.getLogger(Jmenuparqueadero.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void btnabonosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnabonosActionPerformed
+
+        if (pagoFormulario == null || !pagoFormulario.isVisible()) {
             // Si no está abierto, crea una nueva instancia o usa el Singleton
-            ingresoFormulario = new Jingresop(); // Usando Singleton
-            ingresoFormulario.setVisible(true);
+            pagoFormulario = new Jotrosservicios(); // Usando Singleton
+            pagoFormulario.setVisible(true);
         } else {
             // Si ya está abierto, enfócalo
-            ingresoFormulario.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
-            ingresoFormulario.toFront(); // Traer al frente
-            ingresoFormulario.requestFocus(); // Solicitar foco
+            pagoFormulario.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
+            pagoFormulario.toFront(); // Traer al frente
+            pagoFormulario.requestFocus(); // Solicitar foco
         }
-        Jingresop.txtempleado.setText(lblempleado.getText());
-        Jingresop.lblturnos.setText(lblturnos.getText());
-        Jingresop.txtnumeroturno.setText(lblnumeroturno.getText());
-        Jingresop.txtidinicio_turno.setText(lblidinicioturno.getText());
-    }//GEN-LAST:event_btnregistrovehiculoActionPerformed
+        Jotrosservicios.txtempleado.setText(lblempleado.getText());
+        Jotrosservicios.txtnum_turno.setText(lblnumeroturno.getText());
+        Jotrosservicios.lblturnos.setText(lblturnos.getText());
+    }//GEN-LAST:event_btnabonosActionPerformed
+
+    private void btnentregaturnopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnentregaturnopActionPerformed
+
+        Finicioturnop finicio = new Finicioturnop();
+
+        if (sesionIniciada) {
+            sesionIniciada = true;
+            btndeshabilitados();
+            // Si la sesión ya está iniciada, mostrar el formulario de finalización de turno
+            if (salidaturno == null || !salidaturno.isVisible()) {
+                // Si no está abierto, crea una nueva instancia
+                salidaturno = new Jfinturnop();
+                salidaturno.setVisible(true);
+            } else {
+                // Si ya está abierto, enfócalo
+                salidaturno.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
+                salidaturno.toFront(); // Traer al frente
+                salidaturno.requestFocus(); // Solicitar foco
+            }
+
+            metodoDondeSeNecesitaFormLogin();
+        } else {
+            // Si no hay sesión iniciada
+            if (finicio.hayTurnoActivo()) {
+                // Verificar si ya se recuperó el turno
+                if (!turnoRecuperado) {
+                    JOptionPane.showMessageDialog(null, "Hay un turno activo. Debe finalizar el turno actual antes de iniciar uno nuevo.");
+                    turnoRecuperado = true; // Marcar el turno como recuperado
+                }
+
+                // Mostrar el formulario de finalización de turno
+                if (salidaturno == null || !salidaturno.isVisible()) {
+                    salidaturno = new Jfinturnop();
+                    salidaturno.setVisible(true);
+                    sesionIniciada = true;
+                    btndeshabilitados();
+                } else {
+                    salidaturno.setExtendedState(JFrame.NORMAL);
+                    salidaturno.toFront();
+                    salidaturno.requestFocus();
+
+                }
+            } else {
+                // Si no hay turno activo, mostrar el formulario de inicio de turno
+                Jinicioturnop formLogin = new Jinicioturnop();
+                formLogin.toFront();
+                formLogin.setVisible(true);
+            }
+        }
+    }//GEN-LAST:event_btnentregaturnopActionPerformed
 
     private void btnsalidapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnsalidapActionPerformed
 
@@ -1853,62 +2005,51 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         Jsalidap.txtturnosalida.setText(lblnumeroturno.getText());
     }//GEN-LAST:event_btnsalidapActionPerformed
 
-    private void btnentregaturnopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnentregaturnopActionPerformed
+    private void btnregistrovehiculoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnregistrovehiculoActionPerformed
 
-        Finicioturnop finicio = new Finicioturnop();
-
-        if (sesionIniciada) {
-            // Si la sesión no está iniciada, mostrar el formulario de inicio de sesión
-
-            Jfinturnop formTurnos = new Jfinturnop();
-            formTurnos.toFront();
-            formTurnos.setVisible(true);
-            if (salidaturno == null || !salidaturno.isVisible()) {
-                // Si no está abierto, crea una nueva instancia o usa el Singleton
-                salidaturno = new Jfinturnop(); // Usando Singleton
-                salidaturno.setVisible(true);
-            } else {
-                // Si ya está abierto, enfócalo
-                salidaturno.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
-                salidaturno.toFront(); // Traer al frente
-                salidaturno.requestFocus(); // Solicitar foco
-            }
-
-            metodoDondeSeNecesitaFormLogin();
+        // Si la sesión está iniciada, procede a mostrar el formulario
+        if (ingresoFormulario == null || !ingresoFormulario.isVisible()) {
+            // Crear una nueva instancia si no está abierto
+            ingresoFormulario = new Jingresop(); // Usando Singleton
+            ingresoFormulario.setVisible(true);
         } else {
-            if (finicio.hayTurnoActivo()) {
-                JOptionPane.showMessageDialog(null, "Hay un turno activo. Debe finalizar el turno actual antes de iniciar uno nuevo.");
-                Jfinturnop formTurnos = new Jfinturnop();
-                formTurnos.toFront();
-                formTurnos.setVisible(true);
-
-            } else {
-                Jinicioturnop formLogin = new Jinicioturnop();
-                formLogin.toFront();
-                formLogin.setVisible(true);
-            }
+            // Enfocar el formulario si ya está abierto
+            ingresoFormulario.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
+            ingresoFormulario.toFront(); // Traer al frente
+            ingresoFormulario.requestFocus(); // Solicitar foco
         }
-    }//GEN-LAST:event_btnentregaturnopActionPerformed
 
-    private void btnpagospActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnpagospActionPerformed
+        // Configurar los valores en el formulario
+        Jingresop.txtempleado.setText(lblempleado.getText());
+        Jingresop.lblturnos.setText(lblturnos.getText());
+        Jingresop.txtnumeroturno.setText(lblnumeroturno.getText());
+        Jingresop.txtidinicio_turno.setText(lblidinicioturno.getText());
 
-        if (pagoFormulario == null || !pagoFormulario.isVisible()) {
-            // Si no está abierto, crea una nueva instancia o usa el Singleton
-            pagoFormulario = new Jabonosp(); // Usando Singleton
-            pagoFormulario.setVisible(true);
-        } else {
-            // Si ya está abierto, enfócalo
-            pagoFormulario.setExtendedState(JFrame.NORMAL); // Restaurar si está minimizado
-            pagoFormulario.toFront(); // Traer al frente
-            pagoFormulario.requestFocus(); // Solicitar foco
-        }
-        Jabonosp.txtempleado.setText(lblempleado.getText());
-        Jabonosp.lblturnos.setText(lblturnos.getText());
-    }//GEN-LAST:event_btnpagospActionPerformed
+    }//GEN-LAST:event_btnregistrovehiculoActionPerformed
 
-    private void btnregistro4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnregistro4ActionPerformed
+    private void jToggleButton379ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton379ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton379ActionPerformed
 
-    }//GEN-LAST:event_btnregistro4ActionPerformed
+    private void jToggleButton378ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton378ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton378ActionPerformed
+
+    private void jToggleButton307ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton307ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton307ActionPerformed
+
+    private void jToggleButton339ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton339ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton339ActionPerformed
+
+    private void jToggleButton330ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton330ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton330ActionPerformed
+
+    private void jToggleButton279ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton279ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jToggleButton279ActionPerformed
 
     private void jToggleButton303ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton303ActionPerformed
         // TODO add your handling code here:
@@ -1918,29 +2059,40 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jToggleButton195ActionPerformed
 
-    private void jToggleButton279ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton279ActionPerformed
+    private void btncerrarMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btncerrarMouseExited
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton279ActionPerformed
+        btncerrar.setBackground(Color.WHITE);
+    }//GEN-LAST:event_btncerrarMouseExited
 
-    private void jToggleButton330ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton330ActionPerformed
+    private void btncerrarMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btncerrarMouseEntered
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton330ActionPerformed
+        btncerrar.setBackground(Color.RED);
+    }//GEN-LAST:event_btncerrarMouseEntered
 
-    private void jToggleButton307ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton307ActionPerformed
+    private void jToggleButton160ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton160ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton307ActionPerformed
+ 
+    }//GEN-LAST:event_jToggleButton160ActionPerformed
 
-    private void jToggleButton378ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton378ActionPerformed
+    private void jToggleButton156ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton156ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton378ActionPerformed
+     
+    }//GEN-LAST:event_jToggleButton156ActionPerformed
 
-    private void jToggleButton379ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton379ActionPerformed
+    private void jToggleButton154ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton154ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton379ActionPerformed
+   
+    }//GEN-LAST:event_jToggleButton154ActionPerformed
 
-    private void jToggleButton339ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton339ActionPerformed
+    private void btnlistaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnlistaActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jToggleButton339ActionPerformed
+        Jlista lista = new Jlista();
+        lista.toFront();
+        lista.setVisible(true);
+        lista.setExtendedState(JFrame.NORMAL);
+        lista.requestFocus();
+        
+    }//GEN-LAST:event_btnlistaActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1976,12 +2128,14 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnabonos;
+    private javax.swing.JButton btncerrar;
     private javax.swing.JButton btnentregaturnop;
-    private javax.swing.JButton btnpagosp;
-    private javax.swing.JButton btnregistro4;
+    private javax.swing.JButton btnlista;
     private javax.swing.JButton btnregistrovehiculo;
     private javax.swing.JButton btnsalidap;
-    private javax.swing.JDesktopPane desktopPane;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1993,15 +2147,8 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JSeparator jSeparator4;
-    private javax.swing.JSeparator jSeparator5;
-    private javax.swing.JSeparator jSeparator6;
     private javax.swing.JToggleButton jToggleButton153;
     private javax.swing.JToggleButton jToggleButton154;
     private javax.swing.JToggleButton jToggleButton155;
@@ -2198,12 +2345,12 @@ public class Jmenuparqueadero extends javax.swing.JInternalFrame {
     private javax.swing.JToggleButton jToggleButton388;
     private javax.swing.JToggleButton jToggleButton389;
     private javax.swing.JToggleButton jToggleButton390;
-    public static javax.swing.JLabel lblempleado;
-    public static javax.swing.JLabel lblestado;
-    public static javax.swing.JLabel lblfecha;
-    public static javax.swing.JLabel lblidinicioturno;
-    public static javax.swing.JLabel lblnumeroturno;
-    public static javax.swing.JLabel lblturnos;
+    private static javax.swing.JLabel lblempleado;
+    private static javax.swing.JLabel lblestado;
+    private static javax.swing.JLabel lblfecha;
+    private static javax.swing.JLabel lblidinicioturno;
+    private static javax.swing.JLabel lblnumeroturno;
+    private static javax.swing.JLabel lblturnos;
     private javax.swing.JPanel pnlBotones;
     // End of variables declaration//GEN-END:variables
 

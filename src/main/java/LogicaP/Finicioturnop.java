@@ -26,6 +26,12 @@ public class Finicioturnop {
         listaEMpleado.add(empleado);
     }
     
+     ArrayList<Dinicioturnop> listaturno = new ArrayList<>();
+
+    public void agregarturno(Dinicioturnop turno) {
+        listaturno.add(turno);
+    }
+    
    public boolean insertar(Dinicioturnop dts) {
     sSQL = "INSERT INTO inicio_turno (fecha_inicio, turno, numero_turno, estado, empleado) VALUES (?,?,?,?,?)";
     try (PreparedStatement pst = cn.prepareStatement(sSQL)) {

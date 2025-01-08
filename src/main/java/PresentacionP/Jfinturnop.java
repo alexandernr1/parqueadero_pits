@@ -2,6 +2,7 @@ package PresentacionP;
 
 import DatosP.Dinicioturnop;
 import DatosP.Dsalidaturnop;
+import Impresion.CierreTurno;
 import LogicaP.Finicioturnop;
 import LogicaP.Fsalidap;
 import LogicaP.Fsalidaturnop;
@@ -9,10 +10,13 @@ import LogicaP.Tiempopro;
 import java.awt.HeadlessException;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
@@ -147,6 +151,7 @@ public class Jfinturnop extends javax.swing.JFrame {
         jLabel18 = new javax.swing.JLabel();
         txtobservaciones = new javax.swing.JTextField();
         txtidinicioturno = new javax.swing.JTextField();
+        btncopia = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -215,7 +220,7 @@ public class Jfinturnop extends javax.swing.JFrame {
 
         txtturno.setEditable(false);
 
-        jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/car (1).png"))); // NOI18N
+        jLabel12.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/Carro.png"))); // NOI18N
         jLabel12.setText(":");
 
         txtAutos.setEditable(false);
@@ -327,14 +332,15 @@ public class Jfinturnop extends javax.swing.JFrame {
                     .addComponent(jLabel5)
                     .addComponent(txtfechasalida, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(txttRrecibidos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel12)
                         .addComponent(txtAutos, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel27)
-                        .addComponent(txtMotos, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(txtMotos, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jLayeredPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel1)
+                        .addComponent(txttRrecibidos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -507,6 +513,13 @@ public class Jfinturnop extends javax.swing.JFrame {
             }
         });
 
+        btncopia.setText("Copia");
+        btncopia.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btncopiaActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -529,7 +542,9 @@ public class Jfinturnop extends javax.swing.JFrame {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jButton2)
                                         .addGap(45, 45, 45)
-                                        .addComponent(txtidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(txtidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(50, 50, 50)
+                                        .addComponent(btncopia))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGap(47, 47, 47)
                                         .addComponent(jLabel18)
@@ -555,8 +570,10 @@ public class Jfinturnop extends javax.swing.JFrame {
                             .addComponent(txtobservaciones, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel18))
                         .addGap(18, 18, 18)
-                        .addComponent(txtidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(40, 40, 40))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtidinicioturno, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btncopia))
+                        .addGap(39, 39, 39))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -670,28 +687,33 @@ public class Jfinturnop extends javax.swing.JFrame {
         dts.setFechaingreso(txtfecha_hora_inicio.getText());
         dts.setFechasalida(txtfechasalida.getText());
         dts.setRecibos(txttRrecibidos.getText());
-        dts.setTotalautos(txttRrecibidos.getText());
-        dts.setTotalmotos(txttRrecibidos.getText());
+        dts.setTotalautos(txtAutos.getText());
+        dts.setTotalmotos(txtMotos.getText());
         dts.setBase(Integer.parseInt(txtbase.getText().replace(",", "")));
         dts.setTarjeta(Integer.parseInt(txttarjeta.getText().replace(",", "")));
         dts.setEfectivo(Integer.parseInt(txtefectivo.getText().replace(",", "")));
         dts.setTransferencia(Integer.parseInt(txttransferencia.getText().replace(",", "")));
         dts.setOtros_ingresos(Integer.parseInt(txtotros_ingresos.getText().replace(",", "")));
         int estado = cboestado.getSelectedIndex();
-        dts.setEstado((String)cboestado.getItemAt(estado));
+        dts.setEstado((String) cboestado.getItemAt(estado));
         dts.setEfectivo_liquido(Integer.parseInt(txtentrega_admon.getText().replace(",", "")));
-        dts.setTotal_recaudado(Integer.parseInt(txttRrecibidos.getText()));
+        dts.setTotal_recaudado(Integer.parseInt(txttotal_recaudo.getText().replace(",", "")));
         dts.setObservaciones(txtobservaciones.getText());
         dts.setNumero_turno(txtnumero_turno.getText());
 
-
         if (accion.equals("guardar")) {
             if (func.insertar(dts)) {
-                //                JOptionPane.showMessageDialog(rootPane, "Salida de turno satisfactoriamente");
+                try {
+                    //                JOptionPane.showMessageDialog(rootPane, "Salida de turno satisfactoriamente");
 
-                finalizarTurno();
-//                ImprimirCierreTurno imprimir = new ImprimirCierreTurno();
-//                imprimir.ImprimirCierreTurno();
+                    finalizarTurno();
+                    CierreTurno imprimir = new CierreTurno();
+                    imprimir.cierreTurno();
+                } catch (IOException ex) {
+                    Logger.getLogger(Jfinturnop.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(Jfinturnop.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
 
         }
@@ -704,6 +726,19 @@ public class Jfinturnop extends javax.swing.JFrame {
     private void txtidinicioturnoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtidinicioturnoActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtidinicioturnoActionPerformed
+
+    private void btncopiaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btncopiaActionPerformed
+        // TODO add your handling code here:
+        try {
+            
+            CierreTurno imprimir = new CierreTurno();
+            imprimir.cierreTurno();
+        } catch (IOException ex) {
+            Logger.getLogger(Jfinturnop.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(Jfinturnop.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btncopiaActionPerformed
 
     /**
      * @param args the command line arguments
@@ -741,6 +776,7 @@ public class Jfinturnop extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btncopia;
     private javax.swing.JButton buscarnumeroturno;
     private javax.swing.JComboBox<String> cboestado;
     private javax.swing.JButton jButton1;

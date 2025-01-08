@@ -24,11 +24,13 @@ import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import org.jdesktop.swingx.autocomplete.AutoCompleteDecorator;
 
 public class Jsalidap extends javax.swing.JFrame {
 
@@ -46,7 +48,130 @@ public class Jsalidap extends javax.swing.JFrame {
         vehiculosEnParqueo();
         inicioenceros();
         ocultar();
+        Fsalidap fun = new Fsalidap();
+        fun.llenarcboturno(cboplaca);
+        AutoCompleteDecoreitor();
+        configurarEventosComboBox();
     }
+    
+      private void configurarEventosComboBox() {
+        cboplaca.getEditor().getEditorComponent().addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+                    // Verifica si el popup está visible y selecciona el ítem actual
+                    if (cboplaca.isPopupVisible()) {
+                        cboplaca.setSelectedItem(cboplaca.getEditor().getItem());
+                        cboplaca.hidePopup();
+                    }
+                    // Realiza la búsqueda, independientemente del estado del popup
+                    realizarBusquedaPlaca();
+                }
+            }
+        });
+    }
+
+    private void realizarBusquedaPlaca() {
+        inicioenceros();
+        
+        Cconexionp conexion = new Cconexionp();
+
+        try (Connection conectar = conexion.establecerConexionp()) {
+            // Preparar consulta SQL
+            PreparedStatement pst = conectar.prepareStatement("SELECT * FROM ingreso WHERE placa = ? AND estado = 'Activo'");
+            pst.setString(1, (String) cboplaca.getSelectedItem());
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                // Cargar datos de la consulta en los campos de texto
+                txtidingreso.setText(String.valueOf(rs.getInt("idingreso")));
+                txtfechaentrada.setText(rs.getString("fechaingreso"));
+                txtcliente.setText(rs.getString("cliente"));
+                txtzona.setText(rs.getString("zona"));
+                cbotipovehiculo.setSelectedItem(rs.getString("tipovehiculo"));
+                cbotiposervicio.setSelectedItem(rs.getString("tiposervicio"));
+                txtcalle.setText(rs.getString("calle"));
+
+                // Procesar las fechas y realizar cálculos
+                procesarFechas(rs.getString("fechaingreso").trim(), txtfechasalida.getText());
+            } else {
+                JOptionPane.showMessageDialog(null, "No se encontró el número solicitado.");
+            }
+        } catch (SQLException | NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Error al procesar los datos: " + e.getMessage());
+        }
+    }
+
+    private void procesarFechas(String fechaHoraIngreso, String fechaHoraSalida) {
+        try {
+            DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH);
+            LocalDateTime fechaIngreso = LocalDateTime.parse(fechaHoraIngreso, formatoFechaHora);
+            LocalDateTime fechaSalida = LocalDateTime.parse(fechaHoraSalida, formatoFechaHora);
+
+            Duration duracion = Duration.between(fechaIngreso, fechaSalida);
+            long totalMinutos = duracion.toMinutes();
+
+            if (totalMinutos <= 15) {
+                txtdias.setText("0");
+                txthoras.setText("0");
+                txtminutos.setText("0");
+                txtvalor.setText("0");
+                JOptionPane.showMessageDialog(null, "Dentro del tiempo de gracia. No hay cobro.");
+                return;
+            }
+
+            long dias = totalMinutos / (24 * 60);
+            long horas = (totalMinutos % (24 * 60)) / 60;
+            long minutos = totalMinutos % 60;
+
+            txtdias.setText(String.valueOf(dias));
+            txthoras.setText(String.valueOf(horas));
+            txtminutos.setText(String.valueOf(minutos));
+
+            // Realizar el cálculo del costo
+            calcularCosto(dias, horas, minutos);
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(null, "Error al procesar las fechas: " + e.getMessage());
+        }
+    }
+
+    private void calcularCosto(long dias, long horas, long minutos) {
+        NumberFormat formatoMiles = NumberFormat.getNumberInstance(Locale.US);
+        Fsalidap precio = new Fsalidap();
+        String placa = (String) cboplaca.getSelectedItem();
+        String tiposervicio = (String) cbotiposervicio.getSelectedItem();
+        int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
+
+        int calculodias = (int) (dias * nuevoprecio);
+        int calculohoras = (int) ((nuevoprecio * 0.24) * horas);
+
+        if (calculohoras > nuevoprecio) {
+            calculohoras = nuevoprecio;
+        }
+
+        int suma = calculodias + calculohoras;
+        txtvalor.setText(formatoMiles.format(suma));
+
+        int valorParqueo = Integer.parseInt(txtvalor.getText().replace(",", ""));
+        int valorSinIVA = (int) (valorParqueo / 1.19);
+        int valorConIVA = (int) (valorSinIVA * 0.19);
+        int desc9 = (int) (valorSinIVA * 0.09);
+        int valorBruto = valorParqueo - valorConIVA - desc9;
+
+        txtvalorSinIVA.setText(formatoMiles.format(valorBruto));
+        txtIVA_19.setText(formatoMiles.format(valorConIVA));
+        txtdescuento9.setText(formatoMiles.format(desc9));
+
+        int subtotal = valorBruto + valorConIVA + desc9;
+        txtsubtotal.setText(formatoMiles.format((int) (Math.ceil(subtotal / 100.0) * 100)));
+    }
+
+    
+    private void AutoCompleteDecoreitor() {
+        AutoCompleteDecorator.decorate(cboplaca);
+        
+    } 
+    
     private String accion = "guardar";
 
     private void mostrarTiempo() {
@@ -71,7 +196,7 @@ public class Jsalidap extends javax.swing.JFrame {
 
     private void limpiar() {
 
-        txtplaca.setText("");
+        cboplaca.setSelectedItem("");
         cbotipovehiculo.setSelectedItem("SELECCIONAR");
         cbotipovehiculo.setSelectedItem("SELECCIONAR");
         txtfechaentrada.setText("");
@@ -147,7 +272,6 @@ public class Jsalidap extends javax.swing.JFrame {
         txtcliente = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
-        txtplaca = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
         jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
@@ -178,6 +302,7 @@ public class Jsalidap extends javax.swing.JFrame {
         txtAutos = new javax.swing.JTextField();
         jLabel27 = new javax.swing.JLabel();
         txtMotos = new javax.swing.JTextField();
+        cboplaca = new javax.swing.JComboBox<>();
         jPanel2 = new javax.swing.JPanel();
         jLabel24 = new javax.swing.JLabel();
         txtvalorSinIVA = new javax.swing.JTextField();
@@ -191,7 +316,6 @@ public class Jsalidap extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         txtvalor = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
-        txtsubtotal = new javax.swing.JTextField();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
@@ -206,6 +330,7 @@ public class Jsalidap extends javax.swing.JFrame {
         txtdescuento = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         jLabel26 = new javax.swing.JLabel();
+        txtsubtotal = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -225,20 +350,6 @@ public class Jsalidap extends javax.swing.JFrame {
 
         jLabel7.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel7.setText("Placa:");
-
-        txtplaca.setBackground(new java.awt.Color(255, 255, 204));
-        txtplaca.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        txtplaca.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        txtplaca.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtplacaActionPerformed(evt);
-            }
-        });
-        txtplaca.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtplacaKeyPressed(evt);
-            }
-        });
 
         jLabel8.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel8.setText("Tipo Vehiculo:");
@@ -361,7 +472,7 @@ public class Jsalidap extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/car (1).png"))); // NOI18N
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagenes/Carro.png"))); // NOI18N
         jLabel1.setText(":");
 
         txtAutos.setEditable(false);
@@ -373,43 +484,25 @@ public class Jsalidap extends javax.swing.JFrame {
         txtMotos.setEditable(false);
         txtMotos.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
+        cboplaca.setBackground(new java.awt.Color(255, 255, 204));
+        cboplaca.setEditable(true);
+        cboplaca.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cboplacaActionPerformed(evt);
+            }
+        });
+        cboplaca.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                cboplacaKeyPressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel23, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING))
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtzona, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtnumerofactura, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtcliente, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtcalle, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(9, 9, 9)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtplaca, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(cbotipovehiculo, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(cbotiposervicio, 0, 183, Short.MAX_VALUE)
-                                    .addComponent(txtfechaentrada)))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtfechasalida, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addComponent(btnguardar, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -446,7 +539,37 @@ public class Jsalidap extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtidempleado, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtidpago, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addComponent(txtidpago, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel17, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel16, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel19, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel23, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(9, 9, 9)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(cbotipovehiculo, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cbotiposervicio, 0, 183, Short.MAX_VALUE)
+                                    .addComponent(txtfechaentrada)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cboplaca, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtzona, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtnumerofactura, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtcliente, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtcalle, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(txtfechasalida, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE))))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -454,8 +577,8 @@ public class Jsalidap extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtplaca)
-                    .addComponent(jLabel7))
+                    .addComponent(jLabel7)
+                    .addComponent(cboplaca, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
@@ -509,7 +632,7 @@ public class Jsalidap extends javax.swing.JFrame {
                     .addComponent(jLabel22)
                     .addComponent(txtturnosalida, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtempleadosalida, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1)
@@ -585,10 +708,6 @@ public class Jsalidap extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel4.setText("Valor:");
-
-        txtsubtotal.setEditable(false);
-        txtsubtotal.setBackground(new java.awt.Color(255, 255, 204));
-        txtsubtotal.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
 
         jLabel12.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel12.setText("Subtotal:");
@@ -668,10 +787,45 @@ public class Jsalidap extends javax.swing.JFrame {
         jLabel26.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         jLabel26.setText("Descuento:");
 
+        txtsubtotal.setEditable(false);
+        txtsubtotal.setBackground(new java.awt.Color(255, 255, 204));
+        txtsubtotal.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(40, 40, 40)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel25, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel24, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel26, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.TRAILING))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtdescuento, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE)
+                    .addComponent(txtvalorSinIVA)
+                    .addComponent(txtIVA_19)
+                    .addComponent(txtefectivo)
+                    .addComponent(txttarjeta)
+                    .addComponent(txttransferencia)
+                    .addComponent(txttotal, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE)
+                    .addComponent(txtvalor, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtdescuento9)
+                    .addComponent(txtsubtotal))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -690,32 +844,6 @@ public class Jsalidap extends javax.swing.JFrame {
                                 .addComponent(txthoras, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtminutos, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(40, 40, 40)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel18, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel26, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel25, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel24, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtdescuento, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(txtvalorSinIVA)
-                                .addComponent(txtIVA_19)
-                                .addComponent(txtsubtotal)
-                                .addComponent(txtefectivo)
-                                .addComponent(txttarjeta)
-                                .addComponent(txttransferencia)
-                                .addComponent(txttotal, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE)
-                                .addComponent(txtvalor, javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(txtdescuento9))))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGap(69, 69, 69)
                         .addComponent(jButton1)))
@@ -750,15 +878,15 @@ public class Jsalidap extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtdescuento9)
                     .addComponent(jLabel20))
-                .addGap(9, 9, 9)
+                .addGap(8, 8, 8)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtdescuento, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel26))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
                     .addComponent(txtsubtotal, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtdescuento, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel26))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel13)
                     .addGroup(jPanel2Layout.createSequentialGroup()
@@ -809,10 +937,6 @@ public class Jsalidap extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtdiasActionPerformed
 
-    private void txtplacaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtplacaActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtplacaActionPerformed
-
     private void txthorasActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txthorasActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txthorasActionPerformed
@@ -827,7 +951,8 @@ public class Jsalidap extends javax.swing.JFrame {
         Fsalidap func = new Fsalidap();
 
         dts.setIdingreso(Integer.parseInt(txtidingreso.getText()));
-        dts.setPlaca(txtplaca.getText());
+        int placa = cboplaca.getSelectedIndex();
+        dts.setPlaca((String)cboplaca.getItemAt(placa));
         int tipovehiculo = cbotipovehiculo.getSelectedIndex();
         dts.setTipovehiculo((String) cbotipovehiculo.getItemAt(tipovehiculo));
         int tiposervicio = cbotiposervicio.getSelectedIndex();
@@ -888,6 +1013,7 @@ public class Jsalidap extends javax.swing.JFrame {
                     }
                 }
             }
+            limpiar();
         }
 
     }//GEN-LAST:event_btnguardarActionPerformed
@@ -918,7 +1044,7 @@ public class Jsalidap extends javax.swing.JFrame {
                 int Descuento = Integer.parseInt(txtdescuento.getText().replace(",", ""));
 
                 int resta = (valor - Descuento);
-                txtdescuento.setText(formatoMiles.format(resta));
+                txtsubtotal.setText(formatoMiles.format(resta));
             } catch (NumberFormatException e) {
             }
 
@@ -926,174 +1052,6 @@ public class Jsalidap extends javax.swing.JFrame {
 
 
     }//GEN-LAST:event_txtdescuentoKeyPressed
-
-    private void txtplacaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtplacaKeyPressed
-        // TODO add your handling code here:
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            inicioenceros();
-            NumberFormat formatoMiles = NumberFormat.getNumberInstance(Locale.US);
-            Cconexionp conexion = new Cconexionp();
-
-            try ( Connection conectar = conexion.establecerConexionp()) {
-                pst = conectar.prepareStatement("select * from ingreso where placa=? and estado = 'Activo'");
-                pst.setString(1, txtplaca.getText().trim());
-                rs = pst.executeQuery();
-
-                if (rs.next()) {
-                    // Datos obtenidos de la consulta
-                    txtidingreso.setText(String.valueOf(rs.getInt("idingreso")));
-                    txtfechaentrada.setText(rs.getString("fechaingreso"));
-                    txtcliente.setText(rs.getString("cliente"));
-                    txtzona.setText(rs.getString("zona"));
-                    cbotipovehiculo.setSelectedItem(rs.getString("tipovehiculo"));
-                    cbotiposervicio.setSelectedItem(rs.getString("tiposervicio"));
-                    txtcalle.setText(rs.getString("calle"));
-
-                    // Parsear las fechas de ingreso y salida
-                    String fechaHoraIngreso = rs.getString("fechaingreso").trim();
-                    String fechaHoraSalida = txtfechasalida.getText();
-                    LocalDateTime fechaIngreso = LocalDateTime.parse(fechaHoraIngreso, DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH));
-                    LocalDateTime fechaSalida = LocalDateTime.parse(fechaHoraSalida, DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH));
-
-                    // Verificar si las fechas son diferentes
-                    boolean cambioDeFecha = !fechaIngreso.toLocalDate().equals(fechaSalida.toLocalDate());
-
-                    Duration duracion = Duration.between(fechaIngreso, fechaSalida);
-                    long totalMinutos = duracion.toMinutes();
-
-                    // Variables para días, horas y minutos
-                    long dias = 0;
-                    long horas = 0;
-                    long minutos = 0;
-
-                    if (totalMinutos <= 15) {
-                        // Dentro del tiempo de gracia inicial de 15 minutos, no se cobra nada
-                        txtdias.setText("0");
-                        txthoras.setText("0");
-                        txtminutos.setText("0");
-                        txtvalor.setText("0");
-                        JOptionPane.showMessageDialog(null, "Dentro del tiempo de gracia. No hay cobro.");
-                        return;
-                    }
-
-                    if (totalMinutos > (4 * 60 + 15)) {
-                        // Cobrar el día completo si supera las 4 horas y 15 minutos
-                        dias = 1;
-
-                        // Restar los 4 horas y 15 minutos del cálculo
-                        long minutosRestantes = totalMinutos - (4 * 60 + 15);
-
-                        // Calcular días adicionales si excede un día completo después de los primeros 4h15m
-                        if (minutosRestantes >= (24 * 60)) {
-                            dias += minutosRestantes / (24 * 60);
-                            minutosRestantes %= (24 * 60);
-                        }
-
-                        // Calcular horas y minutos adicionales después de los días completos
-                        horas = minutosRestantes / 60;
-                        minutos = minutosRestantes % 60;
-                    } else {
-                        // Si no supera las 4h15m, calcular horas y minutos directamente
-                        horas = totalMinutos / 60;
-                        minutos = totalMinutos % 60;
-                    }
-
-                    // Mostrar los valores calculados
-                    txtdias.setText(String.valueOf(dias));
-                    txthoras.setText(String.valueOf(horas));
-                    txtminutos.setText(String.valueOf(minutos));
-
-                    // Calcular el precio según el tipo de servicio
-                    String placa = rs.getString("placa").trim();
-                    String tiposervicio = rs.getString("tiposervicio").trim();
-                    Fsalidap precio = new Fsalidap();
-
-                    switch (tiposervicio) {
-                        case "DIA" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.24) * horas); // Cálculo proporcional para horas
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "DIA TRANSPORTE" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.24) * horas);
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "DIA MOTO" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.36) * horas);
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "CONVENIO CARGA" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.4) * horas);
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "HORA" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) (nuevoprecio * horas); // Cobro por horas directas
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "ADICIONALES" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.4) * horas);
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        case "CONVENIO HOSTAL" -> {
-                            int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
-                            int calculodias = (int) (dias * nuevoprecio);
-                            int calculohoras = (int) ((nuevoprecio * 0.4) * horas);
-                            int suma = calculodias + calculohoras;
-                            txtvalor.setText(formatoMiles.format(suma));
-                        }
-                        default -> {
-                            JOptionPane.showMessageDialog(null, "Tipo de servicio no reconocido.");
-                        }
-                    }
-
-// Mostrar datos finales
-                    int Valorparqueo = Integer.parseInt(txtvalor.getText().replace(",", ""));
-                    int valorsinIVA = (int) (Valorparqueo / 1.19);
-                    txtvalorSinIVA.setText(formatoMiles.format(valorsinIVA));
-                    int valorConIVA = (int) (valorsinIVA * 0.19);
-                    txtIVA_19.setText(formatoMiles.format(valorConIVA));
-                    int desc9 = (int) (valorsinIVA * 0.09);
-                    txtdescuento9.setText(formatoMiles.format(desc9));
-
-                    int valosiIVA = Integer.parseInt(txtvalorSinIVA.getText().replace(",", ""));
-                    int Iva19 = Integer.parseInt(txtIVA_19.getText().replace(",", ""));
-
-                    int subtotal = valosiIVA + Iva19 + 1;
-                    int subtotalRedondeado = (int) (Math.ceil(subtotal / 100.0) * 100);
-                    txtsubtotal.setText(formatoMiles.format(subtotalRedondeado));
-
-                    // Mostrar datos del turno
-                    Dinicioturnop datoempleado = new Fsalidap().empleado(placa);
-                    if (datoempleado != null) {
-                        txtturnoentrada.setText(String.valueOf(datoempleado.getNumeroTurno()));
-                        txtempleadoentrada.setText(datoempleado.getEmpleado());
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(null, "No se encontró el NUMERO solicitado.");
-                }
-            } catch (SQLException | NumberFormatException e) {
-            }
-        }
-
-
-    }//GEN-LAST:event_txtplacaKeyPressed
 
     private void cbotiposervicioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbotiposervicioActionPerformed
         // TODO add your handling code here:
@@ -1296,6 +1254,137 @@ public class Jsalidap extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void cboplacaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboplacaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cboplacaActionPerformed
+
+    private void cboplacaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cboplacaKeyPressed
+        // TODO add your handling code here:
+      
+//    if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+//        // Verificar si el autocompletado está activo
+//        if (cboplaca.isPopupVisible()) {
+//            // Si el autocompletado está visible, no procesamos el evento
+//            return;
+//        }
+//        
+//        // Lógica principal al presionar Enter después de confirmar selección
+//        inicioenceros(); // Restablecer valores iniciales
+//        NumberFormat formatoMiles = NumberFormat.getNumberInstance(Locale.US);
+//        Cconexionp conexion = new Cconexionp();
+//
+//        try (Connection conectar = conexion.establecerConexionp()) {
+//            // Preparar consulta SQL
+//            pst = conectar.prepareStatement("SELECT * FROM ingreso WHERE placa = ? AND estado = 'Activo'");
+//            pst.setString(1, (String) cboplaca.getSelectedItem());
+//            rs = pst.executeQuery();
+//
+//            if (rs.next()) {
+//                // Cargar datos en los campos de texto
+//                txtidingreso.setText(String.valueOf(rs.getInt("idingreso")));
+//                txtfechaentrada.setText(rs.getString("fechaingreso"));
+//                txtcliente.setText(rs.getString("cliente"));
+//                txtzona.setText(rs.getString("zona"));
+//                cbotipovehiculo.setSelectedItem(rs.getString("tipovehiculo"));
+//                cbotiposervicio.setSelectedItem(rs.getString("tiposervicio"));
+//                txtcalle.setText(rs.getString("calle"));
+//
+//                // Lógica para fechas y cálculo de valores
+//                procesarFechasYCalcularValores(rs);
+//            } else {
+//                JOptionPane.showMessageDialog(null, "No se encontró el número solicitado.");
+//            }
+//        } catch (SQLException | NumberFormatException e) {
+//            JOptionPane.showMessageDialog(null, "Error al procesar los datos: " + e.getMessage());
+//        }
+//    }
+//}
+//
+//// Método separado para procesar fechas y calcular valores
+//private void procesarFechasYCalcularValores(ResultSet rs) throws SQLException {
+//    NumberFormat formatoMiles = NumberFormat.getNumberInstance(Locale.US);
+//
+//    String fechaHoraIngreso = rs.getString("fechaingreso").trim();
+//    String fechaHoraSalida = txtfechasalida.getText();
+//    DateTimeFormatter formatoFechaHora = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a", Locale.ENGLISH);
+//    LocalDateTime fechaIngreso = LocalDateTime.parse(fechaHoraIngreso, formatoFechaHora);
+//    LocalDateTime fechaSalida = LocalDateTime.parse(fechaHoraSalida, formatoFechaHora);
+//
+//    // Cálculos de tiempo y valores
+//    boolean cambioDeFecha = !fechaIngreso.toLocalDate().equals(fechaSalida.toLocalDate());
+//    Duration duracion = Duration.between(fechaIngreso, fechaSalida);
+//    long totalMinutos = duracion.toMinutes();
+//    long dias = 0, horas = 0, minutos = 0;
+//
+//    if (totalMinutos <= 15) {
+//        txtdias.setText("0");
+//        txthoras.setText("0");
+//        txtminutos.setText("0");
+//        txtvalor.setText("0");
+//        JOptionPane.showMessageDialog(null, "Dentro del tiempo de gracia. No hay cobro.");
+//        return;
+//    }
+//
+//    if (totalMinutos > (4 * 60 + 15)) {
+//        dias = 1;
+//        long minutosRestantes = totalMinutos - (4 * 60 + 15);
+//
+//        if (minutosRestantes >= (24 * 60)) {
+//            dias += minutosRestantes / (24 * 60);
+//            minutosRestantes %= (24 * 60);
+//        }
+//
+//        horas = minutosRestantes / 60;
+//        minutos = minutosRestantes % 60;
+//    } else {
+//        horas = totalMinutos / 60;
+//        minutos = totalMinutos % 60;
+//    }
+//
+//    txtdias.setText(String.valueOf(dias));
+//    txthoras.setText(String.valueOf(horas));
+//    txtminutos.setText(String.valueOf(minutos));
+//
+//    // Calcular precio según el tipo de servicio
+//    String placa = rs.getString("placa").trim();
+//    String tiposervicio = rs.getString("tiposervicio").trim();
+//    Fsalidap precio = new Fsalidap();
+//    int nuevoprecio = precio.tiposervicio(placa, tiposervicio);
+//    int calculodias = (int) (dias * nuevoprecio);
+//    int calculohoras = (int) ((nuevoprecio * 0.24) * horas);
+//
+//    if (calculohoras > nuevoprecio) {
+//        calculohoras = nuevoprecio;
+//    }
+//
+//    int suma = calculodias + calculohoras;
+//    txtvalor.setText(formatoMiles.format(suma));
+//
+//    // Cálculo de IVA y descuentos
+//    int Valorparqueo = Integer.parseInt(txtvalor.getText().replace(",", ""));
+//    int valorsinIVA = (int) (Valorparqueo / 1.19);
+//    int valorConIVA = (int) (valorsinIVA * 0.19);
+//    int desc9 = (int) (valorsinIVA * 0.09);
+//    int valorbruto = Valorparqueo - valorConIVA - desc9;
+//
+//    txtvalorSinIVA.setText(formatoMiles.format(valorbruto));
+//    txtIVA_19.setText(formatoMiles.format(valorConIVA));
+//    txtdescuento9.setText(formatoMiles.format(desc9));
+//
+//    int subtotal = valorbruto + valorConIVA + desc9;
+//    int subtotalRedondeado = (int) (Math.ceil(subtotal / 100.0) * 100);
+//    txtsubtotal.setText(formatoMiles.format(subtotalRedondeado));
+//
+//    // Mostrar información del turno
+//    Dinicioturnop datoempleado = new Fsalidap().empleado(placa);
+//    if (datoempleado != null) {
+//        txtturnoentrada.setText(String.valueOf(datoempleado.getNumeroTurno()));
+//        txtempleadoentrada.setText(datoempleado.getEmpleado());
+//    }
+
+
+    }//GEN-LAST:event_cboplacaKeyPressed
+
     /**
      * @param args the command line arguments
      */
@@ -1334,6 +1423,7 @@ public class Jsalidap extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnguardar;
     private javax.swing.JButton btnguardar1;
+    private javax.swing.JComboBox<String> cboplaca;
     private javax.swing.JComboBox<String> cbotiposervicio;
     private javax.swing.JComboBox<String> cbotipovehiculo;
     private javax.swing.JButton jButton1;
@@ -1386,7 +1476,6 @@ public class Jsalidap extends javax.swing.JFrame {
     private javax.swing.JTextField txtidpago;
     private javax.swing.JTextField txtminutos;
     private javax.swing.JTextField txtnumerofactura;
-    private javax.swing.JTextField txtplaca;
     private javax.swing.JTextField txtsubtotal;
     private javax.swing.JTextField txttarjeta;
     private javax.swing.JTextField txttotal;

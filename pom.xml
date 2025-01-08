@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mycompany</groupId>
-    <artifactId>HotelC</artifactId>
+    <artifactId>Parqueadero</artifactId>
     <version>1.0-ParqueaderoPits</version>
     <packaging>jar</packaging>
     
@@ -109,7 +109,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>Presentacion.LoguinDeSistema</mainClass> <!-- Cambia esto al nombre completo de tu clase principal -->
+                                    <mainClass>Presentacionp.LoguinDeSistemap</mainClass> <!-- Cambia esto al nombre completo de tu clase principal -->
                                 </manifest>
                             </archive>
                             <descriptorRefs>
